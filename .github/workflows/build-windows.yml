@@ -1,0 +1,39 @@
+name: Windows exe をビルドして動作確認
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: ライブラリをインストール
+        run: pip install pandas openpyxl pyinstaller
+
+      - name: exe を作成（1ファイル）
+        run: pyinstaller --onefile --name kddi_demo main.py
+
+      - name: exe を実際に動かして確認
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force dist\入力 | Out-Null
+          Copy-Item sample_data\* dist\入力\
+          Push-Location dist
+          .\kddi_demo.exe
+          if ($LASTEXITCODE -ne 0) { throw "exe がエラーで終了しました" }
+          if (-not (Test-Path 出力\集計結果.xlsx)) { throw "集計結果.xlsx ができていません" }
+          Pop-Location
+          Write-Host "OK: Windows上でexeが動き、Excelが出力されました"
+
+      - name: 成果物（exe・入力サンプル・出力結果）を保存
+        uses: actions/upload-artifact@v4
+        with:
+          name: kddi_demo_windows
+          path: dist/
