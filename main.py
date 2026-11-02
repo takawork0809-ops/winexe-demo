@@ -96,6 +96,9 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    for stream in (sys.stdout, sys.stderr):
+      if stream:
+          stream.reconfigure(encoding="utf-8", errors="replace")
     try:
         code = main()
     except Exception:
